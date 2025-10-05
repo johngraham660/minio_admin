@@ -1,5 +1,23 @@
+# Python compiled files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environment
+venv/
 .venv/
-.env
+
+# Pytest cache
+.pytest_cache/
+
+# IDE files (example for VS Code)
+.vscode/
+
+# Pytest Coverage files
+htmlcov/
 coverage.xml
 .coverage
-tests/__pycache__/
+
+# Environment variables file
+.env
