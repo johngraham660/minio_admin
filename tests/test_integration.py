@@ -173,7 +173,9 @@ class TestRealConfigFile:
     
     def test_actual_config_file_structure(self):
         """Test that the actual minio_buckets.json file has the expected structure"""
-        config_path = '/home/johngr/Projects/git/python/minio_admin/config/minio_buckets.json'
+        # Use relative path from the project root
+        config_path = os.path.join(os.path.dirname(__file__), '..', 'config', 'minio_buckets.json')
+        config_path = os.path.abspath(config_path)
         
         with open(config_path, 'r') as f:
             data = json.load(f)
@@ -196,7 +198,9 @@ class TestRealConfigFile:
         mock_client = Mock(spec=Minio)
         mock_minio_login.return_value = mock_client
         
-        config_path = '/home/johngr/Projects/git/python/minio_admin/config/minio_buckets.json'
+        # Use relative path from the project root
+        config_path = os.path.join(os.path.dirname(__file__), '..', 'config', 'minio_buckets.json')
+        config_path = os.path.abspath(config_path)
         
         # Act
         with open(config_path, 'r') as f:
