@@ -72,8 +72,6 @@ if __name__ == '__main__':
     minio_server = getenv("MINIO_SERVER")
     minio_port = getenv("MINIO_PORT")
     minio_secure = getenv("MINIO_SECURE")
-    # bucketcreator_access_key = getenv("MINIO_ACCESS_KEY") 
-    # bucketcreator_secret_key = getenv("MINIO_SECRET_KEY") 
     bucketcreator_access_key = getenv("BUCKET_CREATOR_ACCESS_KEY") 
     bucketcreator_secret_key = getenv("BUCKET_CREATOR_SECRET_KEY") 
 
