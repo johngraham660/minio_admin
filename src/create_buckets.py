@@ -3,19 +3,17 @@
 #
 
 import os
-import sys
-import argparse
 import logging
 import json
 from os import getenv
 from minio import Minio
-from minio.error import S3Error
 from dotenv import load_dotenv
 
 load_dotenv()
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
 
 def minio_login(server: str, port: int, access_key: str, secret_key: str) -> Minio:
     """
@@ -32,9 +30,9 @@ def minio_login(server: str, port: int, access_key: str, secret_key: str) -> Min
     """
     client = Minio(
         f"{server}:{port}",
-        access_key = access_key,
-        secret_key = secret_key,
-        secure = False
+        access_key=access_key,
+        secret_key=secret_key,
+        secure=False
     )
 
     return client
@@ -61,19 +59,17 @@ def create_bucket(client: Minio, bucket: str) -> None:
         # Create the bucket
         logging.info(f"Creating bucket: {bucket}")
         client.make_bucket(bucket)
-        
 
 
 if __name__ == '__main__':
-    
     # =================================================================
     # Establish a connection to the MinIO Server, using least privilege
     # =================================================================
     minio_server = getenv("MINIO_SERVER")
     minio_port = getenv("MINIO_PORT")
     minio_secure = getenv("MINIO_SECURE")
-    bucketcreator_access_key = getenv("BUCKET_CREATOR_ACCESS_KEY") 
-    bucketcreator_secret_key = getenv("BUCKET_CREATOR_SECRET_KEY") 
+    bucketcreator_access_key = getenv("BUCKET_CREATOR_ACCESS_KEY")
+    bucketcreator_secret_key = getenv("BUCKET_CREATOR_SECRET_KEY")
 
     # Get the list of buckets to create
     script_dir = os.path.dirname(__file__)
@@ -85,11 +81,11 @@ if __name__ == '__main__':
     logging.info(f"MINIO_SECURE = {minio_secure}")
 
     # Create a connection instance using the bucketcreator API bucketcreator credentials
-    conn = minio_login(minio_server, 
-                       minio_port, 
-                       bucketcreator_access_key, 
+    conn = minio_login(minio_server,
+                       minio_port,
+                       bucketcreator_access_key,
                        bucketcreator_secret_key
-    )
+                       )
 
     # Now lets create our buckets
     try:
@@ -107,8 +103,6 @@ if __name__ == '__main__':
     except FileNotFoundError:
         logging.error(f"The file {bucket_config_file} was not found.")
     except json.JSONDecodeError:
-        logging.error(f"Could not decode JSON from {bucket_config_file}. Please check the file format.")
+        logging.error(f"Could not decode JSON from {bucket_config_file}.")
     except Exception as e:
         logging.info(f"An unexpected error was encountered {e}")
-
-
