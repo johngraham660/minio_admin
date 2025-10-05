@@ -1,6 +1,5 @@
 .venv/
 .env
-tests/__pycache__/*.*
 coverage.xml
 .coverage
-tests/__pycache__/test_edge_cases.cpython-313-pytest-8.4.2.pyc
+tests/__pycache__/
