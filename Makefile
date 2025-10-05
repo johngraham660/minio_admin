@@ -18,7 +18,8 @@ help:
 	@echo "  test-unit         - Run unit tests only"
 	@echo "  test-integration  - Run integration tests only"
 	@echo "  test-coverage     - Run all tests with coverage report"
-	@echo "  test-all          - Run tests, coverage, and linting"
+	@echo "  test-all          - Run tests, coverage, and linting (strict)"
+	@echo "  test-dev          - Run tests and coverage with non-blocking lint"
 	@echo "  lint              - Run code quality checks (flake8)"
 	@echo "  clean             - Clean up generated files and cache"
 
@@ -92,6 +93,19 @@ test-all: test-coverage lint
 	@echo "All checks completed successfully!"
 	@echo "========================================="
 
+# Run tests and linting but don't fail on lint errors (for development)
+test-dev: test-coverage
+	@echo ""
+	@echo "========================================="
+	@echo "Running Code Quality Checks (non-blocking)"
+	@echo "========================================="
+	-$(PYTHON) -m flake8 src/ tests/ --max-line-length=100 --ignore=E203,W503 --statistics
+	@echo ""
+	@echo "========================================="
+	@echo "Development checks completed!"
+	@echo "Note: Fix linting issues when ready to commit"
+	@echo "========================================="
+
 # Clean up generated files
 clean:
 	@echo "Cleaning up generated files..."
@@ -112,5 +126,5 @@ ci: setup-venv install test-coverage lint
 	@echo "CI pipeline completed successfully!"
 
 # Development workflow target
-dev: setup-venv install test-all
+dev: setup-venv install test-dev
 	@echo "Development setup and testing completed!"
