@@ -1,0 +1,16 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "s3:ListAllMyBuckets",     // Needed to see bucket names
+        "s3:GetBucketLocation",    // Used by bucket_exists()
+        "s3:ListBucket",           // Also used by bucket_exists()
+        "s3:CreateBucket"          // For new bucket creation
+      ],
+      "Resource": "arn:aws:s3:::*"
+    }
+  ]
+}
+
