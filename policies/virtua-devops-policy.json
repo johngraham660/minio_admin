@@ -1,0 +1,21 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "s3:ListBucket",
+        "s3:GetObject",
+        "s3:PutObject",
+        "s3:DeleteObject"
+      ],
+      "Resource": [
+        "arn:aws:s3:::virtua_cicd-pipeline_logs",
+        "arn:aws:s3:::virtua_cicd-pipeline_logs/*",
+        "arn:aws:s3:::virtua_cicd-pipeline_artifacts",
+        "arn:aws:s3:::virtua_cicd-pipeline_artifacts/*"
+      ]
+    }
+  ]
+}
+
