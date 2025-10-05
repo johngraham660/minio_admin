@@ -63,12 +63,13 @@ A Python project for managing MinIO buckets and policies with comprehensive test
 | `make test-unit` | Run unit tests only |
 | `make test-integration` | Run integration tests only |
 | `make test-coverage` | Run tests with coverage reporting |
+| `make test-dev` | Run tests and coverage with non-blocking lint (developer-friendly) |
+| `make test-all` | Run tests, coverage, and linting (strict - fails on lint errors) |
 | `make lint` | Run code quality checks (flake8) |
-| `make test-all` | Run tests, coverage, and linting |
 | `make clean` | Clean up generated files and cache |
 | `make quick` | Quick test run (unit tests only) |
 | `make ci` | Continuous integration workflow |
-| `make dev` | Full development setup |
+| `make dev` | Full development setup (uses test-dev) |
 
 ## Testing
 
@@ -84,10 +85,29 @@ make test-unit
 make test-coverage
 ```
 
-**Complete test suite:**
+**Developer-friendly test suite (non-blocking lint):**
+```bash
+make test-dev
+```
+
+**Complete test suite (strict mode - fails on lint errors):**
 ```bash
 make test-all
 ```
+
+### Test Modes
+
+**Developer Mode (`test-dev`)**:
+- Runs all tests with coverage
+- Shows linting issues but doesn't fail the build
+- Perfect for active development
+- Used by `make dev`
+
+**Strict Mode (`test-all`)**:
+- Runs all tests with coverage  
+- Fails if any linting issues are found
+- Ideal for CI/CD and pre-commit validation
+- Used by `make ci`
 
 ### Test Categories
 
