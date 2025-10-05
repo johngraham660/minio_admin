@@ -1,3 +1,4 @@
 minio
 dotenv
 pytest
+flake8
