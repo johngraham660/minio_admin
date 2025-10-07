@@ -1,0 +1,26 @@
+{
+  "buckets": [
+    "concourse-pipeline-logs",
+    "jenkins-pipeline-logs",
+    "concourse-pipeline-build-artifacts",
+    "jenkins-pipeline-build-artifacts",
+    "k8s-etcdbackup-production"
+  ],
+  "users": [
+    {
+      "username": "svc-concourse",
+      "password": "password123",
+      "policy": "concourse-pipeline-artifacts-policy.json"
+    },
+    {
+      "username": "svc-jenkins",
+      "password": "password123",
+      "policy": "jenkins-pipeline-artifacts-policy.json"
+    },
+    {
+      "username": "svc-k8s",
+      "password": "password123",
+      "policy": "k8s-etcdbackup-policy.json"
+    }
+  ]
+}
