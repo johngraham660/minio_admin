@@ -12,27 +12,29 @@ from minio.error import S3Error
 # Add the src directory to the path so we can import our modules
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
-from create_buckets import minio_login, create_bucket
+from manage_minio import connect, create_bucket
 
 
 @pytest.mark.unit
-class TestMinioLogin:
-    """Unit tests for the minio_login function"""
+class TestConnect:
+    """Unit tests for the connect function"""
     
-    @patch('create_buckets.Minio')
-    def test_minio_login_creates_client_with_correct_parameters(self, mock_minio):
-        """Test that minio_login creates a Minio client with the correct parameters"""
+    @patch('manage_minio.Minio')
+    @patch.dict(os.environ, {
+        'MINIO_SERVER': 'localhost',
+        'MINIO_PORT': '9000',
+        'MINIO_SECURE': 'false',
+        'BUCKET_CREATOR_ACCESS_KEY': 'test_access_key',
+        'BUCKET_CREATOR_SECRET_KEY': 'test_secret_key'
+    })
+    def test_connect_creates_client_with_correct_parameters(self, mock_minio):
+        """Test that connect creates a Minio client with the correct parameters"""
         # Arrange
-        server = "localhost"
-        port = 9000
-        access_key = "test_access_key"
-        secret_key = "test_secret_key"
-        
         mock_client = Mock(spec=Minio)
         mock_minio.return_value = mock_client
         
         # Act
-        result = minio_login(server, port, access_key, secret_key)
+        result = connect()
         
         # Assert
         mock_minio.assert_called_once_with(
@@ -43,20 +45,22 @@ class TestMinioLogin:
         )
         assert result == mock_client
     
-    @patch('create_buckets.Minio')
-    def test_minio_login_with_different_port(self, mock_minio):
-        """Test minio_login with a different port number"""
+    @patch('manage_minio.Minio')
+    @patch.dict(os.environ, {
+        'MINIO_SERVER': 'minio.example.com',
+        'MINIO_PORT': '9001',
+        'MINIO_SECURE': 'false',
+        'BUCKET_CREATOR_ACCESS_KEY': 'admin',
+        'BUCKET_CREATOR_SECRET_KEY': 'password123'
+    })
+    def test_connect_with_different_port(self, mock_minio):
+        """Test connect with a different port number"""
         # Arrange
-        server = "minio.example.com"
-        port = 9001
-        access_key = "admin"
-        secret_key = "password123"
-        
         mock_client = Mock(spec=Minio)
         mock_minio.return_value = mock_client
         
         # Act
-        result = minio_login(server, port, access_key, secret_key)
+        result = connect()
         
         # Assert
         mock_minio.assert_called_once_with(
@@ -67,15 +71,22 @@ class TestMinioLogin:
         )
         assert result == mock_client
     
-    @patch('create_buckets.Minio')
-    def test_minio_login_returns_minio_instance(self, mock_minio):
-        """Test that minio_login returns a Minio instance"""
+    @patch('manage_minio.Minio')
+    @patch.dict(os.environ, {
+        'MINIO_SERVER': 'localhost',
+        'MINIO_PORT': '9000',
+        'MINIO_SECURE': 'false',
+        'BUCKET_CREATOR_ACCESS_KEY': 'key',
+        'BUCKET_CREATOR_SECRET_KEY': 'secret'
+    })
+    def test_connect_returns_minio_instance(self, mock_minio):
+        """Test that connect returns a Minio instance"""
         # Arrange
         mock_client = Mock(spec=Minio)
         mock_minio.return_value = mock_client
         
         # Act
-        result = minio_login("localhost", 9000, "key", "secret")
+        result = connect()
         
         # Assert
         assert isinstance(result, type(mock_client))
@@ -134,13 +145,18 @@ class TestCreateBucket:
         # Arrange
         mock_client = Mock(spec=Minio)
         mock_client.bucket_exists.return_value = False
+        # Create a mock response object for S3Error
+        mock_response = Mock()
+        mock_response.status = 409
+        mock_response.reason = "Conflict"
+        
         mock_client.make_bucket.side_effect = S3Error(
+            mock_response,
             "BucketAlreadyExists",
             "The requested bucket name is not available",
             "bucket-name",
             "request-id",
-            "host-id",
-            "response"
+            "host-id"
         )
         bucket_name = "problematic-bucket"
         

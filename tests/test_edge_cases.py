@@ -11,22 +11,29 @@ from minio.error import S3Error, InvalidResponseError, ServerError
 # Add the src directory to the path so we can import our modules
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
-from create_buckets import minio_login, create_bucket
+from manage_minio import connect, create_bucket
 
 
 @pytest.mark.unit
-class TestMinioLoginEdgeCases:
-    """Edge case tests for minio_login function"""
+class TestConnectEdgeCases:
+    """Edge case tests for connect function"""
     
-    @patch('create_buckets.Minio')
-    def test_minio_login_with_empty_strings(self, mock_minio):
-        """Test minio_login with empty string parameters"""
+    @patch('manage_minio.Minio')
+    @patch.dict(os.environ, {
+        'MINIO_SERVER': '',
+        'MINIO_PORT': '0',
+        'MINIO_SECURE': 'false',
+        'BUCKET_CREATOR_ACCESS_KEY': '',
+        'BUCKET_CREATOR_SECRET_KEY': ''
+    })
+    def test_connect_with_empty_strings(self, mock_minio):
+        """Test connect with empty string parameters"""
         # Arrange
         mock_client = Mock(spec=Minio)
         mock_minio.return_value = mock_client
         
         # Act
-        result = minio_login("", 0, "", "")
+        result = connect()
         
         # Assert
         mock_minio.assert_called_once_with(
@@ -37,9 +44,16 @@ class TestMinioLoginEdgeCases:
         )
         assert result == mock_client
     
-    @patch('create_buckets.Minio')
-    def test_minio_login_with_very_long_strings(self, mock_minio):
-        """Test minio_login with very long string parameters"""
+    @patch('manage_minio.Minio')
+    @patch.dict(os.environ, {
+        'MINIO_SERVER': 'a' * 1000,
+        'MINIO_PORT': '9000',
+        'MINIO_SECURE': 'false',
+        'BUCKET_CREATOR_ACCESS_KEY': 'b' * 1000,
+        'BUCKET_CREATOR_SECRET_KEY': 'c' * 1000
+    })
+    def test_connect_with_very_long_strings(self, mock_minio):
+        """Test connect with very long string parameters"""
         # Arrange
         long_server = "a" * 1000
         long_access_key = "b" * 1000
@@ -48,7 +62,7 @@ class TestMinioLoginEdgeCases:
         mock_minio.return_value = mock_client
         
         # Act
-        result = minio_login(long_server, 9000, long_access_key, long_secret_key)
+        result = connect()
         
         # Assert
         mock_minio.assert_called_once_with(
@@ -59,12 +73,19 @@ class TestMinioLoginEdgeCases:
         )
         assert result == mock_client
     
-    @patch('create_buckets.Minio', side_effect=Exception("Connection failed"))
-    def test_minio_login_connection_failure(self, mock_minio):
-        """Test minio_login when Minio constructor raises an exception"""
+    @patch('manage_minio.Minio', side_effect=Exception("Connection failed"))
+    @patch.dict(os.environ, {
+        'MINIO_SERVER': 'localhost',
+        'MINIO_PORT': '9000',
+        'MINIO_SECURE': 'false',
+        'BUCKET_CREATOR_ACCESS_KEY': 'key',
+        'BUCKET_CREATOR_SECRET_KEY': 'secret'
+    })
+    def test_connect_connection_failure(self, mock_minio):
+        """Test connect when Minio constructor raises an exception"""
         # Act & Assert
         with pytest.raises(Exception, match="Connection failed"):
-            minio_login("localhost", 9000, "key", "secret")
+            connect()
 
 
 @pytest.mark.unit
@@ -141,15 +162,22 @@ class TestCreateBucketEdgeCases:
 class TestParameterValidation:
     """Tests for parameter validation and type handling"""
     
-    @patch('create_buckets.Minio')
-    def test_minio_login_with_numeric_strings(self, mock_minio):
-        """Test minio_login with numeric values as strings"""
+    @patch('manage_minio.Minio')
+    @patch.dict(os.environ, {
+        'MINIO_SERVER': '192.168.1.100',
+        'MINIO_PORT': '9000',
+        'MINIO_SECURE': 'false',
+        'BUCKET_CREATOR_ACCESS_KEY': '123456',
+        'BUCKET_CREATOR_SECRET_KEY': '789012'
+    })
+    def test_connect_with_numeric_strings(self, mock_minio):
+        """Test connect with numeric values as strings"""
         # Arrange
         mock_client = Mock(spec=Minio)
         mock_minio.return_value = mock_client
         
         # Act - port should be converted properly
-        result = minio_login("192.168.1.100", 9000, "123456", "789012")
+        result = connect()
         
         # Assert
         mock_minio.assert_called_once_with(
