@@ -10,10 +10,8 @@
         "s3:DeleteObject"
       ],
       "Resource": [
-        "arn:aws:s3:::virtua_cicd-pipeline_logs",
-        "arn:aws:s3:::virtua_cicd-pipeline_logs/*",
-        "arn:aws:s3:::virtua_cicd-pipeline_artifacts",
-        "arn:aws:s3:::virtua_cicd-pipeline_artifacts/*"
+        "arn:aws:s3:::k8s-etcdbackup-production",
+        "arn:aws:s3:::k8s-etcdbackup-production/*"
       ]
     }
   ]
