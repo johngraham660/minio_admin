@@ -15,7 +15,7 @@ A Python project for managing MinIO buckets and policies with comprehensive test
 │   ├── bucketcreator-policy.json
 │   └── virtua-devops-policy.json
 ├── src/
-│   ├── create_buckets.py      # Main bucket creation script
+│   ├── manage_minio.py        # Main MinIO management script
 │   └── policy_manager.py      # Policy management script
 └── tests/
     ├── conftest.py            # Shared test fixtures
@@ -138,7 +138,7 @@ make lint
 2. Set up environment variables
 3. Run the script:
    ```bash
-   python src/create_buckets.py
+   python src/manage_minio.py
    ```
 
 ### Testing the Scripts
