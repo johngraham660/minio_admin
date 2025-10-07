@@ -11,12 +11,12 @@ from minio import Minio
 # Add the src directory to the path so we can import our modules
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
-import create_buckets
+import manage_minio
 
 
 @pytest.mark.integration
 class TestCreateBucketsIntegration:
-    """Integration tests for the create_buckets module"""
+    """Integration tests for the manage_minio module"""
     
     @patch.dict(os.environ, {
         'MINIO_SERVER': 'localhost',
