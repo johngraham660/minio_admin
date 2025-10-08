@@ -201,7 +201,11 @@ def minio_connection_params():
 @pytest.fixture
 def real_config_path():
     """Fixture that provides the path to the real config file"""
-    return '/home/johngr/Projects/git/python/minio_admin/config/minio_server_config.json'
+    # Use relative path from the test directory to make it portable across environments
+    test_dir = os.path.dirname(__file__)
+    config_path = os.path.join(test_dir, '..', 'config', 'minio_server_config.json')
+    # Return the normalized absolute path to ensure it works regardless of cwd
+    return os.path.normpath(config_path)
 
 
 @pytest.fixture

@@ -143,18 +143,21 @@ class TestCreateBucket:
         # Arrange
         mock_client = Mock(spec=Minio)
         mock_client.bucket_exists.return_value = False
+        
         # Create a mock response object for S3Error
         mock_response = Mock()
         mock_response.status = 409
         mock_response.reason = "Conflict"
-
+        mock_response.data = b'{"error": "BucketAlreadyExists"}'
+        
+        # Create S3Error with proper constructor parameters
         mock_client.make_bucket.side_effect = S3Error(
-            mock_response,
-            "BucketAlreadyExists",
-            "The requested bucket name is not available",
-            "bucket-name",
-            "request-id",
-            "host-id"
+            response=mock_response,
+            code="BucketAlreadyExists",
+            message="The requested bucket name is not available",
+            resource="bucket-name",
+            request_id="request-id",
+            host_id="host-id"
         )
         bucket_name = "problematic-bucket"
 
