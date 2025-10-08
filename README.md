@@ -1,6 +1,14 @@
 # MinIO Admin Project
 
-A Python project for managing MinIO buckets and policies with comprehensive testing.
+A Python project for managing MinIO buckets, policies, and users with HashiCorp Vault integration and comprehensive testing.
+
+## Features
+
+- ✅ **MinIO Bucket Management**: Automated bucket creation
+- ✅ **User & Policy Management**: Create users and assign policies
+- 🔐 **HashiCorp Vault Integration**: Secure password retrieval using AppRole authentication
+- 🧪 **Comprehensive Testing**: Unit, integration, and edge case tests
+- 🚀 **CI/CD Ready**: GitHub Actions workflow included
 
 ## Project Structure
 
@@ -8,15 +16,18 @@ A Python project for managing MinIO buckets and policies with comprehensive test
 .
 ├── Makefile                    # Build automation with testing targets
 ├── pytest.ini                 # Pytest configuration
-├── requirements.txt            # Python dependencies
+├── requirements.txt            # Python dependencies (includes hvac for Vault)
+├── .env.example               # Environment variables template
 ├── config/
-│   └── minio_buckets.json     # Bucket configuration
+│   └── minio_server_config.json # Server configuration (passwords removed)
 ├── policies/
 │   ├── bucketcreator-policy.json
-│   └── virtua-devops-policy.json
+│   ├── concourse-pipeline-artifacts-policy.json
+│   ├── jenkins-pipeline-artifacts-policy.json
+│   └── k8s-etcdbackup-policy.json
 ├── src/
 │   ├── manage_minio.py        # Main MinIO management script
-│   └── policy_manager.py      # Policy management script
+│   └── vault_client.py        # HashiCorp Vault client module
 └── tests/
     ├── conftest.py            # Shared test fixtures
     ├── test_create_buckets.py # Unit tests
@@ -43,13 +54,41 @@ A Python project for managing MinIO buckets and policies with comprehensive test
    make install
    ```
 
-2. **Configure environment variables (create a .env file):**
+2. **Configure environment variables:**
+   
+   Copy the example environment file and configure your settings:
    ```bash
+   cp .env.example .env
+   ```
+   
+   Edit `.env` with your configuration:
+   ```bash
+   # MinIO Server Configuration
    MINIO_SERVER=localhost
    MINIO_PORT=9000
    MINIO_SECURE=false
-   BUCKET_CREATOR_ACCESS_KEY=your_access_key
-   BUCKET_CREATOR_SECRET_KEY=your_secret_key
+   
+   # MinIO Credentials
+   BUCKET_CREATOR_ACCESS_KEY=your_bucket_creator_access_key
+   BUCKET_CREATOR_SECRET_KEY=your_bucket_creator_secret_key
+   MINIO_ADMIN_ACCESS_KEY=your_admin_access_key
+   MINIO_ADMIN_SECRET_KEY=your_admin_secret_key
+   
+   # HashiCorp Vault Configuration
+   VAULT_URL=http://vault.virtua.home:8200
+   VAULT_ROLE_ID=your_role_id
+   VAULT_SECRET_ID=your_secret_id
+   ```
+
+3. **Set up HashiCorp Vault secrets:**
+   
+   Store your MinIO user passwords in Vault under the path `secret/data/minio/users`:
+   ```bash
+   # Example vault commands to store passwords:
+   vault kv put secret/minio/users \
+     svc-concourse=secure_password_1 \
+     svc-jenkins=secure_password_2 \
+     svc-k8s=secure_password_3
    ```
 
 ## Available Make Targets
@@ -132,14 +171,34 @@ make lint
 
 ## Usage
 
-### Creating Buckets
+### HashiCorp Vault Integration
 
-1. Configure your bucket list in `config/minio_buckets.json`
-2. Set up environment variables
-3. Run the script:
+The application now retrieves MinIO user passwords from HashiCorp Vault instead of storing them in configuration files. This provides better security and secret management.
+
+**Vault Setup Requirements:**
+- Vault server accessible at the configured URL
+- AppRole authentication method enabled
+- Secrets stored under `secret/data/minio/users` path
+
+**Fallback Behavior:**
+If Vault is unavailable, the application will attempt to fall back to passwords in the configuration file (for backward compatibility during transition).
+
+### Creating Buckets and Users
+
+1. Configure your buckets and users in `config/minio_server_config.json` (passwords are now retrieved from Vault)
+2. Set up environment variables (including Vault credentials)
+3. Store user passwords in Vault
+4. Run the script:
    ```bash
    python src/manage_minio.py
    ```
+
+### Testing Vault Connection
+
+Test your Vault connection:
+```bash
+python src/vault_client.py
+```
 
 ### Testing the Scripts
 
@@ -187,6 +246,7 @@ This runs:
 See `requirements.txt` for the complete list. Key dependencies:
 - `minio`: MinIO Python SDK
 - `python-dotenv`: Environment variable management
+- `hvac`: HashiCorp Vault client library
 - `pytest`: Testing framework
 - `pytest-cov`: Coverage reporting
 - `pytest-mock`: Mocking utilities
