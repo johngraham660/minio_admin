@@ -80,15 +80,17 @@ A Python project for managing MinIO buckets, policies, and users with HashiCorp 
    VAULT_SECRET_ID=your_secret_id
    ```
 
+   **Security Note**: Service usernames are now configurable via environment variables instead of being hardcoded in configuration files. This prevents exposing internal service naming conventions in your repository.
+
 3. **Set up HashiCorp Vault secrets:**
    
    Store your MinIO user passwords in Vault under the path `secret/data/minio/users`:
    ```bash
    # Example vault commands to store passwords:
    vault kv put secret/minio/users \
-     svc-concourse=secure_password_1 \
-     svc-jenkins=secure_password_2 \
-     svc-k8s=secure_password_3
+     user1=secure_password_1 \
+     user2=secure_password_2 \
+     user3=secure_password_3
    ```
 
 ## Available Make Targets

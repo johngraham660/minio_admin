@@ -58,11 +58,16 @@ def setup_minio_user_secrets():
         print(f"✅ Successfully connected to Vault at {vault_client.vault_url}")
         
         # Define the user passwords
+        # Read usernames from environment variables for security
+        concourse_user = os.getenv('MINIO_USER_CONCOURSE', 'svc-concourse')
+        jenkins_user = os.getenv('MINIO_USER_JENKINS', 'svc-jenkins')
+        k8s_user = os.getenv('MINIO_USER_K8S', 'svc-k8s')
+        
         # In production, these should be generated securely or entered interactively
         user_passwords = {
-            "svc-concourse": input("Enter password for svc-concourse: ").strip(),
-            "svc-jenkins": input("Enter password for svc-jenkins: ").strip(),
-            "svc-k8s": input("Enter password for svc-k8s: ").strip()
+            concourse_user: input(f"Enter password for {concourse_user}: ").strip(),
+            jenkins_user: input(f"Enter password for {jenkins_user}: ").strip(),
+            k8s_user: input(f"Enter password for {k8s_user}: ").strip()
         }
         
         # Validate passwords

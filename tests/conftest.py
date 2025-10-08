@@ -29,10 +29,16 @@ def mock_vault_client():
     mock_vault.authenticate.return_value = True
     mock_vault.is_authenticated.return_value = True
     mock_vault.get_user_password.return_value = "secure_password_from_vault"
+    
+    # Use environment variables for usernames with fallbacks
+    concourse_user = os.getenv('MINIO_USER_CONCOURSE', 'svc-concourse')
+    jenkins_user = os.getenv('MINIO_USER_JENKINS', 'svc-jenkins')
+    k8s_user = os.getenv('MINIO_USER_K8S', 'svc-k8s')
+    
     mock_vault.get_secret.return_value = {
-        "svc-concourse": "vault_password_1",
-        "svc-jenkins": "vault_password_2",
-        "svc-k8s": "vault_password_3"
+        concourse_user: "vault_password_1",
+        jenkins_user: "vault_password_2",
+        k8s_user: "vault_password_3"
     }
     mock_vault.revoke_token.return_value = None
     return mock_vault
@@ -55,20 +61,25 @@ def sample_bucket_config():
 @pytest.fixture
 def sample_user_config_with_vault():
     """Fixture that provides sample user configuration with Vault paths"""
+    # Use environment variables for usernames with fallbacks
+    concourse_user = os.getenv('MINIO_USER_CONCOURSE', 'svc-concourse')
+    jenkins_user = os.getenv('MINIO_USER_JENKINS', 'svc-jenkins')
+    k8s_user = os.getenv('MINIO_USER_K8S', 'svc-k8s')
+    
     return {
         "users": [
             {
-                "username": "svc-concourse",
+                "username": concourse_user,
                 "vault_path": "secret/data/minio/users",
                 "policy": "concourse-pipeline-artifacts-policy.json"
             },
             {
-                "username": "svc-jenkins",
+                "username": jenkins_user,
                 "vault_path": "secret/data/minio/users",
                 "policy": "jenkins-pipeline-artifacts-policy.json"
             },
             {
-                "username": "svc-k8s",
+                "username": k8s_user,
                 "vault_path": "secret/data/minio/users",
                 "policy": "k8s-etcdbackup-policy.json"
             }
@@ -118,7 +129,10 @@ def test_environment_variables():
         'BUCKET_CREATOR_SECRET_KEY': 'test_secret_key',
         'VAULT_ADDR': 'http://test-vault:8200',
         'VAULT_ROLE_ID': 'test-role-id',
-        'VAULT_SECRET_ID': 'test-secret-id'
+        'VAULT_SECRET_ID': 'test-secret-id',
+        'MINIO_USER_CONCOURSE': 'svc-concourse',
+        'MINIO_USER_JENKINS': 'svc-jenkins',
+        'MINIO_USER_K8S': 'svc-k8s'
     }
 
 

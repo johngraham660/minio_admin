@@ -8,17 +8,17 @@
   ],
   "users": [
     {
-      "username": "svc-concourse",
+      "username": "${MINIO_USER_CONCOURSE}",
       "vault_path": "secret/data/minio/users",
       "policy": "concourse-pipeline-artifacts-policy.json"
     },
     {
-      "username": "svc-jenkins",
+      "username": "${MINIO_USER_JENKINS}",
       "vault_path": "secret/data/minio/users",
       "policy": "jenkins-pipeline-artifacts-policy.json"
     },
     {
-      "username": "svc-k8s",
+      "username": "${MINIO_USER_K8S}",
       "vault_path": "secret/data/minio/users",
       "policy": "k8s-etcdbackup-policy.json"
     }
