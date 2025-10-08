@@ -19,6 +19,44 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
+def substitute_env_vars_in_config(config_data):
+    """
+    Substitute environment variables in configuration data for usernames
+
+    This allows keeping sensitive service usernames in environment variables
+    instead of committing them to the repository.
+
+    Args:
+        config_data: Dictionary containing configuration data
+
+    Returns:
+        Dictionary with environment variables substituted
+    """
+    # Mapping of placeholder usernames to environment variable names
+    username_mappings = {
+        "MINIO_USER_CONCOURSE": os.getenv("MINIO_USER_CONCOURSE", "user1"),
+        "MINIO_USER_JENKINS": os.getenv("MINIO_USER_JENKINS", "user2"),
+        "MINIO_USER_K8S": os.getenv("MINIO_USER_K8S", "user3")
+    }
+
+    # Create a deep copy to avoid modifying the original
+    import copy
+    config_copy = copy.deepcopy(config_data)
+
+    # Substitute usernames in user configurations
+    if 'users' in config_copy:
+        for user_config in config_copy['users']:
+            username = user_config.get('username', '')
+            # Check if username is a placeholder that should be substituted
+            for env_var, actual_username in username_mappings.items():
+                if username == f"${{{env_var}}}" or username == env_var:
+                    user_config['username'] = actual_username
+                    logger.debug(f"Substituted {env_var} -> {actual_username}")
+                    break
+
+    return config_copy
+
+
 def connect() -> Minio:
     """
     Establish a connection to the MinIO server using environment variables
@@ -301,6 +339,9 @@ if __name__ == '__main__':
     try:
         with open(config_file, 'r') as f:
             config_data = json.load(f)
+
+        # Substitute environment variables for usernames
+        config_data = substitute_env_vars_in_config(config_data)
 
         # =================================================================
         # Create buckets defined in the JSON file

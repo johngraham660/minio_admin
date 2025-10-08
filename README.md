@@ -75,10 +75,12 @@ A Python project for managing MinIO buckets, policies, and users with HashiCorp 
    MINIO_ADMIN_SECRET_KEY=your_admin_secret_key
    
    # HashiCorp Vault Configuration
-   VAULT_URL=http://vault.virtua.home:8200
+   VAULT_ADDR=https://vault.example.com:8200
    VAULT_ROLE_ID=your_role_id
    VAULT_SECRET_ID=your_secret_id
    ```
+
+   **Security Note**: Service usernames are now configurable via environment variables instead of being hardcoded in configuration files. This prevents exposing internal service naming conventions in your repository.
 
 3. **Set up HashiCorp Vault secrets:**
    
@@ -86,9 +88,9 @@ A Python project for managing MinIO buckets, policies, and users with HashiCorp 
    ```bash
    # Example vault commands to store passwords:
    vault kv put secret/minio/users \
-     svc-concourse=secure_password_1 \
-     svc-jenkins=secure_password_2 \
-     svc-k8s=secure_password_3
+     user1=secure_password_1 \
+     user2=secure_password_2 \
+     user3=secure_password_3
    ```
 
 ## Available Make Targets

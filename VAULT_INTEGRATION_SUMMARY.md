@@ -44,7 +44,7 @@ Your MinIO admin application has been successfully updated to integrate with Has
 ### 🔐 Your Vault Configuration
 
 Based on the information you provided:
-- **Vault URL**: `http://vault.virtua.home:8200`
+- **Vault URL**: `https://vault.example.com:8200`
 - **Role ID**: `REDACTED`
 - **Secret ID**: `REDACTED`
 
@@ -65,9 +65,9 @@ Based on the information you provided:
    Or manually using Vault CLI:
    ```bash
    vault kv put secret/minio/users \
-     svc-concourse=your_secure_password_1 \
-     svc-jenkins=your_secure_password_2 \
-     svc-k8s=your_secure_password_3
+     user1=your_secure_password_1 \
+     user2=your_secure_password_2 \
+     user3=your_secure_password_3
    ```
 
 3. **Run Your Application**
