@@ -31,7 +31,7 @@ def mock_vault_client():
     mock_vault.get_user_password.return_value = "secure_password_from_vault"
     mock_vault.get_secret.return_value = {
         "svc-concourse": "vault_password_1",
-        "svc-jenkins": "vault_password_2", 
+        "svc-jenkins": "vault_password_2",
         "svc-k8s": "vault_password_3"
     }
     mock_vault.revoke_token.return_value = None
@@ -44,7 +44,7 @@ def sample_bucket_config():
     return {
         "buckets": [
             "test-bucket-1",
-            "test-bucket-2", 
+            "test-bucket-2",
             "test-bucket-3",
             "development-bucket",
             "production-bucket"
@@ -63,13 +63,13 @@ def sample_user_config_with_vault():
                 "policy": "concourse-pipeline-artifacts-policy.json"
             },
             {
-                "username": "svc-jenkins", 
+                "username": "svc-jenkins",
                 "vault_path": "secret/data/minio/users",
                 "policy": "jenkins-pipeline-artifacts-policy.json"
             },
             {
                 "username": "svc-k8s",
-                "vault_path": "secret/data/minio/users", 
+                "vault_path": "secret/data/minio/users",
                 "policy": "k8s-etcdbackup-policy.json"
             }
         ]
@@ -88,7 +88,7 @@ def sample_user_config_legacy():
             },
             {
                 "username": "svc-jenkins",
-                "password": "legacy_password_2", 
+                "password": "legacy_password_2",
                 "policy": "jenkins-pipeline-artifacts-policy.json"
             }
         ]
@@ -128,9 +128,9 @@ def temp_config_file(sample_bucket_config):
     with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
         json.dump(sample_bucket_config, f)
         temp_path = f.name
-    
+
     yield temp_path
-    
+
     # Cleanup
     try:
         os.unlink(temp_path)
@@ -145,9 +145,9 @@ def temp_vault_config_file(sample_user_config_with_vault, sample_bucket_config):
     with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
         json.dump(config_data, f)
         temp_path = f.name
-    
+
     yield temp_path
-    
+
     # Cleanup
     try:
         os.unlink(temp_path)
@@ -161,9 +161,9 @@ def temp_empty_config_file(empty_bucket_config):
     with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
         json.dump(empty_bucket_config, f)
         temp_path = f.name
-    
+
     yield temp_path
-    
+
     # Cleanup
     try:
         os.unlink(temp_path)
@@ -177,9 +177,9 @@ def temp_invalid_config_file():
     with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
         f.write('{ invalid json content')
         temp_path = f.name
-    
+
     yield temp_path
-    
+
     # Cleanup
     try:
         os.unlink(temp_path)
@@ -218,12 +218,12 @@ def reset_logging():
     # Clear any existing handlers
     for handler in logging.root.handlers[:]:
         logging.root.removeHandler(handler)
-    
+
     # Reset to basic config
     logging.basicConfig(level=logging.INFO, force=True)
-    
+
     yield
-    
+
     # Clean up after test
     for handler in logging.root.handlers[:]:
         logging.root.removeHandler(handler)

@@ -11,7 +11,6 @@ from minio import Minio
 from minio import MinioAdmin
 from minio.credentials.providers import StaticProvider
 from dotenv import load_dotenv
-from minio.error import S3Error
 from vault_client import get_vault_client, VaultClient
 
 load_dotenv()
@@ -41,7 +40,8 @@ def connect() -> Minio:
         try:
             minio_port = int(minio_port_str)
         except ValueError:
-            logging.error(f"MINIO_PORT environment variable {minio_port_str} is not a valid integer")
+            logging.error(
+                f"MINIO_PORT environment variable {minio_port_str} is not a valid integer")
             sys.exit(1)
 
     # Convert secure flag
@@ -84,7 +84,8 @@ def connect_admin() -> MinioAdmin:
         try:
             minio_port = int(minio_port_str)
         except ValueError:
-            logging.error(f"MINIO_PORT environment variable {minio_port_str} is not a valid integer")
+            logging.error(
+                f"MINIO_PORT environment variable {minio_port_str} is not a valid integer")
             sys.exit(1)
 
     # Convert secure flag
@@ -135,7 +136,7 @@ def create_bucket(client: Minio, bucket: str) -> None:
 
 
 def load_policy(policy_name: str) -> str:
-    """ 
+    """
     Load a JSON policy from a file
 
     Args:
@@ -150,7 +151,7 @@ def load_policy(policy_name: str) -> str:
 
 
 def apply_policy(admin_client: MinioAdmin, policy_name: str, policy_text: str) -> None:
-    """ 
+    """
     Create or update a policy in MinIO
 
     Args:
@@ -160,7 +161,7 @@ def apply_policy(admin_client: MinioAdmin, policy_name: str, policy_text: str) -
 
     Returns:
         None: This function does not return anything
-        
+
     Raises:
         Exception: If policy creation/update fails
     """
@@ -168,7 +169,7 @@ def apply_policy(admin_client: MinioAdmin, policy_name: str, policy_text: str) -
     try:
         # Parse the JSON string into a dictionary
         policy_dict = json.loads(policy_text)
-        
+
         # Use the policy_add method with the parsed policy dictionary
         result = admin_client.policy_add(policy_name, policy=policy_dict)
         logging.info(f"Policy {policy_name} applied successfully: {result}")
@@ -180,19 +181,23 @@ def apply_policy(admin_client: MinioAdmin, policy_name: str, policy_text: str) -
         raise
 
 
-def create_user_with_vault_password(admin_client: MinioAdmin, username: str, vault_client: VaultClient, vault_path: str) -> None:
-    """ 
+def create_user_with_vault_password(
+        admin_client: MinioAdmin,
+        username: str,
+        vault_client: VaultClient,
+        vault_path: str) -> None:
+    """
     Create a MinIO user account with password retrieved from Vault
-    
+
     Args:
         admin_client (MinioAdmin): The MinioAdmin connection instance
         username (str): The username for the new user account
         vault_client (VaultClient): Authenticated Vault client
         vault_path (str): Path to the secrets in Vault
-        
+
     Returns:
         None: This function does not return anything
-        
+
     Raises:
         Exception: If user creation fails for reasons other than user already exists
     """
@@ -200,11 +205,11 @@ def create_user_with_vault_password(admin_client: MinioAdmin, username: str, vau
     try:
         # Get password from Vault
         password = vault_client.get_user_password(username, vault_path)
-        
+
         # Create the user with access_key (username) and secret_key (password)
         result = admin_client.user_add(username, password)
         logging.info(f"User {username} created successfully: {result}")
-        
+
     except Exception as e:
         error_str = str(e)
         if "already exists" in error_str.lower():
@@ -215,17 +220,17 @@ def create_user_with_vault_password(admin_client: MinioAdmin, username: str, vau
 
 
 def create_user(admin_client: MinioAdmin, username: str, password: str) -> None:
-    """ 
+    """
     Create a MinIO user account
-    
+
     Args:
         admin_client (MinioAdmin): The MinioAdmin connection instance
         username (str): The username for the new user account
         password (str): The password for the new user account
-        
+
     Returns:
         None: This function does not return anything
-        
+
     Raises:
         Exception: If user creation fails for reasons other than user already exists
     """
@@ -234,7 +239,7 @@ def create_user(admin_client: MinioAdmin, username: str, password: str) -> None:
         # Create the user with access_key (username) and secret_key (password)
         result = admin_client.user_add(username, password)
         logging.info(f"User {username} created successfully: {result}")
-        
+
     except Exception as e:
         error_str = str(e)
         if "already exists" in error_str.lower():
@@ -245,17 +250,17 @@ def create_user(admin_client: MinioAdmin, username: str, password: str) -> None:
 
 
 def apply_policy_to_user(admin_client: MinioAdmin, username: str, policy_name: str) -> None:
-    """ 
+    """
     Apply a policy to a specific MinIO user
-    
+
     Args:
         admin_client (MinioAdmin): The MinioAdmin connection instance
         username (str): The username to apply the policy to
         policy_name (str): The name of the policy to apply
-        
+
     Returns:
         None: This function does not return anything
-        
+
     Raises:
         Exception: If policy application fails
     """
@@ -264,7 +269,7 @@ def apply_policy_to_user(admin_client: MinioAdmin, username: str, policy_name: s
         # Apply the policy to the user
         policy_result = admin_client.policy_set(policy_name, user=username)
         logging.info(f"Policy {policy_name} applied to user {username}: {policy_result}")
-        
+
     except Exception as e:
         logging.error(f"Failed to apply policy {policy_name} to user {username}: {e}")
         raise
@@ -296,7 +301,7 @@ if __name__ == '__main__':
     try:
         with open(config_file, 'r') as f:
             config_data = json.load(f)
-            
+
         # =================================================================
         # Create buckets defined in the JSON file
         # =================================================================
@@ -314,53 +319,58 @@ if __name__ == '__main__':
         users = config_data.get('users', [])
         if users:
             print("\nCreating MinIO Users and Policies:")
-            
+
             # Track which policies we've already created to avoid duplicates
             created_policies = set()
-            
+
             for user_config in users:
                 username = user_config.get('username')
                 password = user_config.get('password')  # Legacy support
                 vault_path = user_config.get('vault_path', 'secret/data/minio/users')
                 policy_file = user_config.get('policy')
-                
+
                 if not all([username, policy_file]):
-                    logging.warning(f"Incomplete user configuration (missing username or policy): {user_config}")
+                    logging.warning(
+                        f"Incomplete user configuration (missing username or policy): "
+                        f"{user_config}")
                     continue
-                
+
                 # Check if we have Vault client and vault_path, otherwise require password
                 if not vault_client and not password:
-                    logging.error(f"No Vault connection and no password in config for user '{username}' - skipping")
+                    logging.error(
+                        f"No Vault connection and no password in config for user "
+                        f"'{username}' - skipping")
                     continue
-                
+
                 try:
                     # Extract policy name from filename (remove .json extension)
                     policy_name = os.path.splitext(policy_file)[0]
-                    
+
                     # Create policy if we haven't already
                     if policy_name not in created_policies:
                         policy_text = load_policy(policy_file)
                         apply_policy(admin_connection, policy_name, policy_text)
                         created_policies.add(policy_name)
-                    
+
                     # Create user - prefer Vault over config password
                     if vault_client:
-                        create_user_with_vault_password(admin_connection, username, vault_client, vault_path)
+                        create_user_with_vault_password(
+                            admin_connection, username, vault_client, vault_path)
                     else:
                         create_user(admin_connection, username, password)
-                    
+
                     # Apply policy to user
                     apply_policy_to_user(admin_connection, username, policy_name)
-                    
+
                     print(f"✅ User '{username}' created with policy '{policy_name}'")
-                    
+
                 except Exception as e:
                     print(f"❌ Failed to create user '{username}': {e}")
                     logging.error(f"Error creating user {username}: {e}")
-                    
+
         else:
             print("No users found in configuration file")
-            
+
     except FileNotFoundError:
         logging.error(f"The configuration file {config_file} was not found.")
         print(f"❌ Configuration file not found: {config_file}")
