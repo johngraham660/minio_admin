@@ -75,7 +75,7 @@ A Python project for managing MinIO buckets, policies, and users with HashiCorp 
    MINIO_ADMIN_SECRET_KEY=your_admin_secret_key
    
    # HashiCorp Vault Configuration
-   VAULT_URL=http://vault.virtua.home:8200
+   VAULT_ADDR=https://vault.example.com:8200
    VAULT_ROLE_ID=your_role_id
    VAULT_SECRET_ID=your_secret_id
    ```
