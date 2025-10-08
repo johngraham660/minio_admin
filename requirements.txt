@@ -1,5 +1,6 @@
 minio
-dotenv
+python-dotenv
+hvac
 pytest
 pytest-cov
 pytest-mock
