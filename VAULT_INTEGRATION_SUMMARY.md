@@ -44,7 +44,7 @@ Your MinIO admin application has been successfully updated to integrate with Has
 ### 🔐 Your Vault Configuration
 
 Based on the information you provided:
-- **Vault URL**: `http://vault.virtua.home:8200`
+- **Vault URL**: `https://vault.example.com:8200`
 - **Role ID**: `REDACTED`
 - **Secret ID**: `REDACTED`
 

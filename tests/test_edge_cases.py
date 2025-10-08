@@ -163,7 +163,7 @@ class TestParameterValidation:
 
     @patch('manage_minio.Minio')
     @patch.dict(os.environ, {
-        'MINIO_SERVER': '192.168.1.100',
+        'MINIO_SERVER': 'minio.example.com',
         'MINIO_PORT': '9000',
         'MINIO_SECURE': 'false',
         'BUCKET_CREATOR_ACCESS_KEY': '123456',
@@ -180,7 +180,7 @@ class TestParameterValidation:
 
         # Assert
         mock_minio.assert_called_once_with(
-            "192.168.1.100:9000",
+            "minio.example.com:9000",
             access_key="123456",
             secret_key="789012",
             secure=False
