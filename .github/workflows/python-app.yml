@@ -26,7 +26,7 @@ jobs:
         make install
     - name: Run tests with coverage
       run: |
-        make test-coverage
+        make test-dev
     - name: Run linting (non-blocking)
       run: |
         make lint || echo "Linting issues found - check logs above"

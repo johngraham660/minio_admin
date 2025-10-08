@@ -1,0 +1,26 @@
+{
+  "buckets": [
+    "concourse-pipeline-logs",
+    "jenkins-pipeline-logs",
+    "concourse-pipeline-build-artifacts",
+    "jenkins-pipeline-build-artifacts",
+    "k8s-etcdbackup-production"
+  ],
+  "users": [
+    {
+      "username": "svc-concourse",
+      "vault_path": "secret/data/minio/users",
+      "policy": "concourse-pipeline-artifacts-policy.json"
+    },
+    {
+      "username": "svc-jenkins",
+      "vault_path": "secret/data/minio/users",
+      "policy": "jenkins-pipeline-artifacts-policy.json"
+    },
+    {
+      "username": "svc-k8s",
+      "vault_path": "secret/data/minio/users",
+      "policy": "k8s-etcdbackup-policy.json"
+    }
+  ]
+}

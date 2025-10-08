@@ -23,15 +23,74 @@ def mock_minio_client():
 
 
 @pytest.fixture
+def mock_vault_client():
+    """Fixture that provides a mock Vault client"""
+    mock_vault = Mock()
+    mock_vault.authenticate.return_value = True
+    mock_vault.is_authenticated.return_value = True
+    mock_vault.get_user_password.return_value = "secure_password_from_vault"
+    mock_vault.get_secret.return_value = {
+        "svc-concourse": "vault_password_1",
+        "svc-jenkins": "vault_password_2",
+        "svc-k8s": "vault_password_3"
+    }
+    mock_vault.revoke_token.return_value = None
+    return mock_vault
+
+
+@pytest.fixture
 def sample_bucket_config():
     """Fixture that provides sample bucket configuration data"""
     return {
         "buckets": [
             "test-bucket-1",
-            "test-bucket-2", 
+            "test-bucket-2",
             "test-bucket-3",
             "development-bucket",
             "production-bucket"
+        ]
+    }
+
+
+@pytest.fixture
+def sample_user_config_with_vault():
+    """Fixture that provides sample user configuration with Vault paths"""
+    return {
+        "users": [
+            {
+                "username": "svc-concourse",
+                "vault_path": "secret/data/minio/users",
+                "policy": "concourse-pipeline-artifacts-policy.json"
+            },
+            {
+                "username": "svc-jenkins",
+                "vault_path": "secret/data/minio/users",
+                "policy": "jenkins-pipeline-artifacts-policy.json"
+            },
+            {
+                "username": "svc-k8s",
+                "vault_path": "secret/data/minio/users",
+                "policy": "k8s-etcdbackup-policy.json"
+            }
+        ]
+    }
+
+
+@pytest.fixture
+def sample_user_config_legacy():
+    """Fixture that provides sample user configuration with legacy passwords"""
+    return {
+        "users": [
+            {
+                "username": "svc-concourse",
+                "password": "legacy_password_1",
+                "policy": "concourse-pipeline-artifacts-policy.json"
+            },
+            {
+                "username": "svc-jenkins",
+                "password": "legacy_password_2",
+                "policy": "jenkins-pipeline-artifacts-policy.json"
+            }
         ]
     }
 
@@ -56,7 +115,10 @@ def test_environment_variables():
         'MINIO_PORT': '9000',
         'MINIO_SECURE': 'false',
         'BUCKET_CREATOR_ACCESS_KEY': 'test_access_key',
-        'BUCKET_CREATOR_SECRET_KEY': 'test_secret_key'
+        'BUCKET_CREATOR_SECRET_KEY': 'test_secret_key',
+        'VAULT_ADDR': 'http://test-vault:8200',
+        'VAULT_ROLE_ID': 'test-role-id',
+        'VAULT_SECRET_ID': 'test-secret-id'
     }
 
 
@@ -66,9 +128,26 @@ def temp_config_file(sample_bucket_config):
     with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
         json.dump(sample_bucket_config, f)
         temp_path = f.name
-    
+
     yield temp_path
-    
+
+    # Cleanup
+    try:
+        os.unlink(temp_path)
+    except FileNotFoundError:
+        pass
+
+
+@pytest.fixture
+def temp_vault_config_file(sample_user_config_with_vault, sample_bucket_config):
+    """Fixture that creates a temporary config file with Vault configuration"""
+    config_data = {**sample_bucket_config, **sample_user_config_with_vault}
+    with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+        json.dump(config_data, f)
+        temp_path = f.name
+
+    yield temp_path
+
     # Cleanup
     try:
         os.unlink(temp_path)
@@ -82,9 +161,9 @@ def temp_empty_config_file(empty_bucket_config):
     with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
         json.dump(empty_bucket_config, f)
         temp_path = f.name
-    
+
     yield temp_path
-    
+
     # Cleanup
     try:
         os.unlink(temp_path)
@@ -98,9 +177,9 @@ def temp_invalid_config_file():
     with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
         f.write('{ invalid json content')
         temp_path = f.name
-    
+
     yield temp_path
-    
+
     # Cleanup
     try:
         os.unlink(temp_path)
@@ -122,7 +201,11 @@ def minio_connection_params():
 @pytest.fixture
 def real_config_path():
     """Fixture that provides the path to the real config file"""
-    return '/home/johngr/Projects/git/python/minio_admin/config/minio_buckets.json'
+    # Use relative path from the test directory to make it portable across environments
+    test_dir = os.path.dirname(__file__)
+    config_path = os.path.join(test_dir, '..', 'config', 'minio_server_config.json')
+    # Return the normalized absolute path to ensure it works regardless of cwd
+    return os.path.normpath(config_path)
 
 
 @pytest.fixture
@@ -139,12 +222,12 @@ def reset_logging():
     # Clear any existing handlers
     for handler in logging.root.handlers[:]:
         logging.root.removeHandler(handler)
-    
+
     # Reset to basic config
     logging.basicConfig(level=logging.INFO, force=True)
-    
+
     yield
-    
+
     # Clean up after test
     for handler in logging.root.handlers[:]:
         logging.root.removeHandler(handler)

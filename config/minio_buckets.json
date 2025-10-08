@@ -1,8 +1,0 @@
-{
-  "buckets": [
-    "virtua-cicd-pipeline-logs",
-    "virtua-cicd-pipeline-artifacts",
-    "k8s-etcdbackup-development",
-    "k8s-etcdbackup-production"
-  ]
-}
