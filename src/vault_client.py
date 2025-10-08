@@ -23,14 +23,16 @@ class VaultClient:
         Initialize the Vault client
 
         Args:
-            vault_url: Vault server URL (defaults to VAULT_URL env var)
+            vault_url: Vault server URL (defaults to VAULT_ADDR env var)
             role_id: AppRole role ID (defaults to VAULT_ROLE_ID env var)
             secret_id: AppRole secret ID (defaults to VAULT_SECRET_ID env var)
         """
-        self.vault_url = vault_url or os.getenv('VAULT_ADDR', 'http://vault.virtua.home:8200')
+        self.vault_url = vault_url or os.getenv('VAULT_ADDR')
         self.role_id = role_id or os.getenv('VAULT_ROLE_ID')
         self.secret_id = secret_id or os.getenv('VAULT_SECRET_ID')
 
+        if not self.vault_url:
+            raise ValueError("VAULT_ADDR environment variable must be set")
         if not self.role_id or not self.secret_id:
             raise ValueError("VAULT_ROLE_ID and VAULT_SECRET_ID environment variables must be set")
 
@@ -193,9 +195,9 @@ def get_vault_client(vault_url: Optional[str] = None,
     Factory function to create and authenticate a Vault client
 
     Args:
-        vault_url: Vault server URL (optional, uses env var if not provided)
-        role_id: AppRole role ID (optional, uses env var if not provided)
-        secret_id: AppRole secret ID (optional, uses env var if not provided)
+        vault_url: Vault server URL (optional, uses VAULT_ADDR env var if not provided)
+        role_id: AppRole role ID (optional, uses VAULT_ROLE_ID env var if not provided)
+        secret_id: AppRole secret ID (optional, uses VAULT_SECRET_ID env var if not provided)
 
     Returns:
         VaultClient: Authenticated Vault client instance
