@@ -29,12 +29,12 @@ def mock_vault_client():
     mock_vault.authenticate.return_value = True
     mock_vault.is_authenticated.return_value = True
     mock_vault.get_user_password.return_value = "secure_password_from_vault"
-    
+
     # Use environment variables for usernames with fallbacks
     concourse_user = os.getenv('MINIO_USER_CONCOURSE', 'user1')
     jenkins_user = os.getenv('MINIO_USER_JENKINS', 'user2')
     k8s_user = os.getenv('MINIO_USER_K8S', 'user3')
-    
+
     mock_vault.get_secret.return_value = {
         concourse_user: "vault_password_1",
         jenkins_user: "vault_password_2",
@@ -65,7 +65,7 @@ def sample_user_config_with_vault():
     concourse_user = os.getenv('MINIO_USER_CONCOURSE', 'user1')
     jenkins_user = os.getenv('MINIO_USER_JENKINS', 'user2')
     k8s_user = os.getenv('MINIO_USER_K8S', 'user3')
-    
+
     return {
         "users": [
             {

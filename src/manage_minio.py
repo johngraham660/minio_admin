@@ -22,13 +22,13 @@ logger = logging.getLogger(__name__)
 def substitute_env_vars_in_config(config_data):
     """
     Substitute environment variables in configuration data for usernames
-    
+
     This allows keeping sensitive service usernames in environment variables
     instead of committing them to the repository.
-    
+
     Args:
         config_data: Dictionary containing configuration data
-        
+
     Returns:
         Dictionary with environment variables substituted
     """
@@ -38,11 +38,11 @@ def substitute_env_vars_in_config(config_data):
         "MINIO_USER_JENKINS": os.getenv("MINIO_USER_JENKINS", "user2"),
         "MINIO_USER_K8S": os.getenv("MINIO_USER_K8S", "user3")
     }
-    
+
     # Create a deep copy to avoid modifying the original
     import copy
     config_copy = copy.deepcopy(config_data)
-    
+
     # Substitute usernames in user configurations
     if 'users' in config_copy:
         for user_config in config_copy['users']:
@@ -53,7 +53,7 @@ def substitute_env_vars_in_config(config_data):
                     user_config['username'] = actual_username
                     logger.debug(f"Substituted {env_var} -> {actual_username}")
                     break
-    
+
     return config_copy
 
 
@@ -339,7 +339,7 @@ if __name__ == '__main__':
     try:
         with open(config_file, 'r') as f:
             config_data = json.load(f)
-        
+
         # Substitute environment variables for usernames
         config_data = substitute_env_vars_in_config(config_data)
 

@@ -9,7 +9,7 @@ from unittest.mock import patch
 # Add the src directory to the path so we can import our modules
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
-from manage_minio import substitute_env_vars_in_config
+from manage_minio import substitute_env_vars_in_config  # noqa: E402
 
 
 @pytest.mark.unit
@@ -26,7 +26,7 @@ class TestEnvironmentVariableSubstitution:
                 {"username": "${MINIO_USER_K8S}", "policy": "test3.json"}
             ]
         }
-        
+
         env_vars = {
             'MINIO_USER_CONCOURSE': 'my-concourse-svc',
             'MINIO_USER_JENKINS': 'my-jenkins-svc',
@@ -95,7 +95,7 @@ class TestEnvironmentVariableSubstitution:
                 {"username": "${MINIO_USER_JENKINS}", "policy": "test3.json"}
             ]
         }
-        
+
         env_vars = {
             'MINIO_USER_CONCOURSE': 'env-concourse',
             'MINIO_USER_JENKINS': 'env-jenkins'
@@ -150,7 +150,7 @@ class TestEnvironmentVariableSubstitution:
                 {"username": "MINIO_USER_CONCOURSE", "policy": "test.json"}
             ]
         }
-        
+
         env_vars = {'MINIO_USER_CONCOURSE': 'alt-format-user'}
 
         # Act

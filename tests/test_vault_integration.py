@@ -138,24 +138,30 @@ class TestVaultConfigurationHandling:
     def test_vault_client_requires_vault_addr(self):
         """Test that VaultClient raises error when VAULT_ADDR is not provided"""
         from vault_client import VaultClient
-        
+
         # Test that missing VAULT_ADDR raises ValueError
         with patch.dict(os.environ, {}, clear=True):  # Clear all env vars
             with pytest.raises(ValueError, match="VAULT_ADDR environment variable must be set"):
                 VaultClient(vault_url=None, role_id="test-role", secret_id="test-secret")
-    
+
     def test_vault_client_requires_role_credentials(self):
         """Test that VaultClient raises error when role credentials are missing"""
         from vault_client import VaultClient
-        
+
         # Test that missing role_id raises ValueError
         with patch.dict(os.environ, {'VAULT_ADDR': 'https://vault.example.com:8200'}, clear=True):
-            with pytest.raises(ValueError, match="VAULT_ROLE_ID and VAULT_SECRET_ID environment variables must be set"):
+            with pytest.raises(
+                ValueError,
+                match="VAULT_ROLE_ID and VAULT_SECRET_ID environment variables must be set"
+            ):
                 VaultClient(vault_url=None, role_id=None, secret_id="test-secret")
-        
-        # Test that missing secret_id raises ValueError  
+
+        # Test that missing secret_id raises ValueError
         with patch.dict(os.environ, {'VAULT_ADDR': 'https://vault.example.com:8200'}, clear=True):
-            with pytest.raises(ValueError, match="VAULT_ROLE_ID and VAULT_SECRET_ID environment variables must be set"):
+            with pytest.raises(
+                ValueError,
+                match="VAULT_ROLE_ID and VAULT_SECRET_ID environment variables must be set"
+            ):
                 VaultClient(vault_url=None, role_id="test-role", secret_id=None)
 
     def test_user_config_with_vault_path(self):
