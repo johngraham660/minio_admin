@@ -9,17 +9,17 @@
   "users": [
     {
       "username": "svc-concourse",
-      "password": "password123",
+      "vault_path": "secret/data/minio/users",
       "policy": "concourse-pipeline-artifacts-policy.json"
     },
     {
       "username": "svc-jenkins",
-      "password": "password123",
+      "vault_path": "secret/data/minio/users",
       "policy": "jenkins-pipeline-artifacts-policy.json"
     },
     {
       "username": "svc-k8s",
-      "password": "password123",
+      "vault_path": "secret/data/minio/users",
       "policy": "k8s-etcdbackup-policy.json"
     }
   ]
