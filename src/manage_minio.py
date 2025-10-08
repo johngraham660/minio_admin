@@ -12,6 +12,7 @@ from minio import MinioAdmin
 from minio.credentials.providers import StaticProvider
 from dotenv import load_dotenv
 from minio.error import S3Error
+from vault_client import get_vault_client, VaultClient
 
 load_dotenv()
 
@@ -179,6 +180,40 @@ def apply_policy(admin_client: MinioAdmin, policy_name: str, policy_text: str) -
         raise
 
 
+def create_user_with_vault_password(admin_client: MinioAdmin, username: str, vault_client: VaultClient, vault_path: str) -> None:
+    """ 
+    Create a MinIO user account with password retrieved from Vault
+    
+    Args:
+        admin_client (MinioAdmin): The MinioAdmin connection instance
+        username (str): The username for the new user account
+        vault_client (VaultClient): Authenticated Vault client
+        vault_path (str): Path to the secrets in Vault
+        
+    Returns:
+        None: This function does not return anything
+        
+    Raises:
+        Exception: If user creation fails for reasons other than user already exists
+    """
+    logging.info(f"Creating User: {username} (password from Vault)")
+    try:
+        # Get password from Vault
+        password = vault_client.get_user_password(username, vault_path)
+        
+        # Create the user with access_key (username) and secret_key (password)
+        result = admin_client.user_add(username, password)
+        logging.info(f"User {username} created successfully: {result}")
+        
+    except Exception as e:
+        error_str = str(e)
+        if "already exists" in error_str.lower():
+            logging.info(f"User {username} already exists, skipping creation")
+        else:
+            logging.error(f"Failed to create user {username}: {e}")
+            raise
+
+
 def create_user(admin_client: MinioAdmin, username: str, password: str) -> None:
     """ 
     Create a MinIO user account
@@ -242,6 +277,18 @@ if __name__ == '__main__':
     connection = connect()
     admin_connection = connect_admin()
 
+    # =================================================================
+    # Initialize Vault client for password retrieval
+    # =================================================================
+    vault_client = None
+    try:
+        vault_client = get_vault_client()
+        print("✅ Successfully connected to HashiCorp Vault")
+    except Exception as e:
+        print(f"❌ Failed to connect to Vault: {e}")
+        print("🔄 Falling back to configuration file passwords")
+        # Continue without Vault - will fail if config doesn't have passwords
+
     # Get the configuration from JSON file
     script_dir = os.path.dirname(__file__)
     config_file = os.path.join(script_dir, '..', 'config', 'minio_server_config.json')
@@ -273,11 +320,17 @@ if __name__ == '__main__':
             
             for user_config in users:
                 username = user_config.get('username')
-                password = user_config.get('password')
+                password = user_config.get('password')  # Legacy support
+                vault_path = user_config.get('vault_path', 'secret/data/minio/users')
                 policy_file = user_config.get('policy')
                 
-                if not all([username, password, policy_file]):
-                    logging.warning(f"Incomplete user configuration: {user_config}")
+                if not all([username, policy_file]):
+                    logging.warning(f"Incomplete user configuration (missing username or policy): {user_config}")
+                    continue
+                
+                # Check if we have Vault client and vault_path, otherwise require password
+                if not vault_client and not password:
+                    logging.error(f"No Vault connection and no password in config for user '{username}' - skipping")
                     continue
                 
                 try:
@@ -290,8 +343,11 @@ if __name__ == '__main__':
                         apply_policy(admin_connection, policy_name, policy_text)
                         created_policies.add(policy_name)
                     
-                    # Create user
-                    create_user(admin_connection, username, password)
+                    # Create user - prefer Vault over config password
+                    if vault_client:
+                        create_user_with_vault_password(admin_connection, username, vault_client, vault_path)
+                    else:
+                        create_user(admin_connection, username, password)
                     
                     # Apply policy to user
                     apply_policy_to_user(admin_connection, username, policy_name)
@@ -314,5 +370,13 @@ if __name__ == '__main__':
     except Exception as e:
         logging.error(f"An unexpected error was encountered: {e}")
         print(f"❌ Unexpected error: {e}")
+    finally:
+        # Clean up Vault token
+        if vault_client:
+            try:
+                vault_client.revoke_token()
+                logger.info("Vault token revoked")
+            except Exception as e:
+                logger.warning(f"Error revoking Vault token: {e}")
 
     print("\n🎯 MinIO server setup completed!")
