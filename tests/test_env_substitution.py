@@ -61,9 +61,9 @@ class TestEnvironmentVariableSubstitution:
             result = substitute_env_vars_in_config(test_config)
 
         # Assert - should use default values
-        assert result['users'][0]['username'] == 'svc-concourse'
-        assert result['users'][1]['username'] == 'svc-jenkins'
-        assert result['users'][2]['username'] == 'svc-k8s'
+        assert result['users'][0]['username'] == 'user1'
+        assert result['users'][1]['username'] == 'user2'
+        assert result['users'][2]['username'] == 'user3'
 
     def test_substitute_env_vars_no_modification_needed(self):
         """Test that config without placeholders is unchanged"""

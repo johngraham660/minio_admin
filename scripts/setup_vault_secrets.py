@@ -59,9 +59,9 @@ def setup_minio_user_secrets():
         
         # Define the user passwords
         # Read usernames from environment variables for security
-        concourse_user = os.getenv('MINIO_USER_CONCOURSE', 'svc-concourse')
-        jenkins_user = os.getenv('MINIO_USER_JENKINS', 'svc-jenkins')
-        k8s_user = os.getenv('MINIO_USER_K8S', 'svc-k8s')
+        concourse_user = os.getenv('MINIO_USER_CONCOURSE', 'user1')
+        jenkins_user = os.getenv('MINIO_USER_JENKINS', 'user2')
+        k8s_user = os.getenv('MINIO_USER_K8S', 'user3')
         
         # In production, these should be generated securely or entered interactively
         user_passwords = {

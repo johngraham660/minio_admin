@@ -34,9 +34,9 @@ def substitute_env_vars_in_config(config_data):
     """
     # Mapping of placeholder usernames to environment variable names
     username_mappings = {
-        "MINIO_USER_CONCOURSE": os.getenv("MINIO_USER_CONCOURSE", "svc-concourse"),
-        "MINIO_USER_JENKINS": os.getenv("MINIO_USER_JENKINS", "svc-jenkins"),
-        "MINIO_USER_K8S": os.getenv("MINIO_USER_K8S", "svc-k8s")
+        "MINIO_USER_CONCOURSE": os.getenv("MINIO_USER_CONCOURSE", "user1"),
+        "MINIO_USER_JENKINS": os.getenv("MINIO_USER_JENKINS", "user2"),
+        "MINIO_USER_K8S": os.getenv("MINIO_USER_K8S", "user3")
     }
     
     # Create a deep copy to avoid modifying the original

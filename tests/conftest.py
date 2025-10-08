@@ -31,9 +31,9 @@ def mock_vault_client():
     mock_vault.get_user_password.return_value = "secure_password_from_vault"
     
     # Use environment variables for usernames with fallbacks
-    concourse_user = os.getenv('MINIO_USER_CONCOURSE', 'svc-concourse')
-    jenkins_user = os.getenv('MINIO_USER_JENKINS', 'svc-jenkins')
-    k8s_user = os.getenv('MINIO_USER_K8S', 'svc-k8s')
+    concourse_user = os.getenv('MINIO_USER_CONCOURSE', 'user1')
+    jenkins_user = os.getenv('MINIO_USER_JENKINS', 'user2')
+    k8s_user = os.getenv('MINIO_USER_K8S', 'user3')
     
     mock_vault.get_secret.return_value = {
         concourse_user: "vault_password_1",
@@ -62,9 +62,9 @@ def sample_bucket_config():
 def sample_user_config_with_vault():
     """Fixture that provides sample user configuration with Vault paths"""
     # Use environment variables for usernames with fallbacks
-    concourse_user = os.getenv('MINIO_USER_CONCOURSE', 'svc-concourse')
-    jenkins_user = os.getenv('MINIO_USER_JENKINS', 'svc-jenkins')
-    k8s_user = os.getenv('MINIO_USER_K8S', 'svc-k8s')
+    concourse_user = os.getenv('MINIO_USER_CONCOURSE', 'user1')
+    jenkins_user = os.getenv('MINIO_USER_JENKINS', 'user2')
+    k8s_user = os.getenv('MINIO_USER_K8S', 'user3')
     
     return {
         "users": [
@@ -93,12 +93,12 @@ def sample_user_config_legacy():
     return {
         "users": [
             {
-                "username": "svc-concourse",
+                "username": "legacy-user1",
                 "password": "legacy_password_1",
                 "policy": "concourse-pipeline-artifacts-policy.json"
             },
             {
-                "username": "svc-jenkins",
+                "username": "legacy-user2",
                 "password": "legacy_password_2",
                 "policy": "jenkins-pipeline-artifacts-policy.json"
             }
@@ -130,9 +130,9 @@ def test_environment_variables():
         'VAULT_ADDR': 'http://test-vault:8200',
         'VAULT_ROLE_ID': 'test-role-id',
         'VAULT_SECRET_ID': 'test-secret-id',
-        'MINIO_USER_CONCOURSE': 'svc-concourse',
-        'MINIO_USER_JENKINS': 'svc-jenkins',
-        'MINIO_USER_K8S': 'svc-k8s'
+        'MINIO_USER_CONCOURSE': 'test-user1',
+        'MINIO_USER_JENKINS': 'test-user2',
+        'MINIO_USER_K8S': 'test-user3'
     }
 
 
