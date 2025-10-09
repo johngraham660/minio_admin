@@ -7,6 +7,9 @@ A Python project for managing MinIO buckets, policies, and users with HashiCorp 
 - ✅ **MinIO Bucket Management**: Automated bucket creation
 - ✅ **User & Policy Management**: Create users and assign policies
 - 🔐 **HashiCorp Vault Integration**: Secure password retrieval using AppRole authentication
+- 🔧 **Interactive Setup Helper**: Guided Vault secrets configuration with validation
+- 📋 **Configuration-Driven**: Users and policies defined in JSON config, no hardcoded values
+- 🛡️ **Robust Error Handling**: Graceful fallbacks and clear user guidance
 - 🧪 **Comprehensive Testing**: Unit, integration, and edge case tests
 - 🚀 **CI/CD Ready**: GitHub Actions workflow included
 
@@ -25,6 +28,8 @@ A Python project for managing MinIO buckets, policies, and users with HashiCorp 
 │   ├── concourse-pipeline-artifacts-policy.json
 │   ├── jenkins-pipeline-artifacts-policy.json
 │   └── k8s-etcdbackup-policy.json
+├── scripts/
+│   └── setup_vault_secrets.py # Interactive Vault secrets setup helper
 ├── src/
 │   ├── manage_minio.py        # Main MinIO management script
 │   └── vault_client.py        # HashiCorp Vault client module
@@ -74,23 +79,59 @@ A Python project for managing MinIO buckets, policies, and users with HashiCorp 
    MINIO_ADMIN_ACCESS_KEY=your_admin_access_key
    MINIO_ADMIN_SECRET_KEY=your_admin_secret_key
    
+   # MinIO Service User Names (configure for your environment)
+   MINIO_USER_CONCOURSE=your_concourse_user
+   MINIO_USER_JENKINS=your_jenkins_user
+   MINIO_USER_K8S=your_k8s_user
+   
    # HashiCorp Vault Configuration
    VAULT_ADDR=https://vault.example.com:8200
    VAULT_ROLE_ID=your_role_id
    VAULT_SECRET_ID=your_secret_id
    ```
 
-   **Security Note**: Service usernames are now configurable via environment variables instead of being hardcoded in configuration files. This prevents exposing internal service naming conventions in your repository.
+   **Security Note**: Service usernames are configurable via environment variables and the application uses a configuration-driven approach instead of hardcoded values. This prevents exposing internal service naming conventions in your repository while providing robust fallback handling for incomplete configurations.
 
 3. **Set up HashiCorp Vault secrets:**
    
-   Store your MinIO user passwords in Vault under the path `secret/data/minio/users`:
+   Use the interactive setup helper to store MinIO user passwords in Vault:
    ```bash
-   # Example vault commands to store passwords:
+   python scripts/setup_vault_secrets.py
+   ```
+   
+   This script will:
+   - Verify your Vault connection and credentials
+   - Load user configuration from `config/minio_server_config.json`
+   - Warn you if environment variables are missing (with fallback options)
+   - Interactively prompt for passwords for each configured user
+   - Store the passwords securely in Vault at `secret/data/minio/users`
+   - Verify the secrets were stored correctly
+   
+   **Manual Vault setup (alternative):**
+   ```bash
+   # Using Vault CLI:
    vault kv put secret/minio/users \
-     user1=secure_password_1 \
-     user2=secure_password_2 \
-     user3=secure_password_3
+     your_concourse_user=secure_password_1 \
+     your_jenkins_user=secure_password_2 \
+     your_k8s_user=secure_password_3
+   
+   # Using curl with Vault HTTP API:
+   # First, authenticate and get a token
+   VAULT_TOKEN=$(curl -s -X POST $VAULT_ADDR/v1/auth/approle/login \
+     -d '{"role_id":"'$VAULT_ROLE_ID'","secret_id":"'$VAULT_SECRET_ID'"}' \
+     | jq -r '.auth.client_token')
+   
+   # Then store the secrets
+   curl -X POST $VAULT_ADDR/v1/secret/data/minio/users \
+     -H "X-Vault-Token: $VAULT_TOKEN" \
+     -H "Content-Type: application/json" \
+     -d '{
+       "data": {
+         "your_concourse_user": "secure_password_1",
+         "your_jenkins_user": "secure_password_2", 
+         "your_k8s_user": "secure_password_3"
+       }
+     }'
    ```
 
 ## Available Make Targets
@@ -188,18 +229,35 @@ If Vault is unavailable, the application will attempt to fall back to passwords 
 ### Creating Buckets and Users
 
 1. Configure your buckets and users in `config/minio_server_config.json` (passwords are now retrieved from Vault)
-2. Set up environment variables (including Vault credentials)
-3. Store user passwords in Vault
-4. Run the script:
+2. Set up environment variables (including Vault credentials and service usernames)
+3. Store user passwords in Vault using the setup helper:
+   ```bash
+   python scripts/setup_vault_secrets.py
+   ```
+4. Run the main script to create buckets, users, and policies:
    ```bash
    python src/manage_minio.py
    ```
+
+### Configuration Validation
+
+The setup script includes intelligent configuration validation:
+
+- **Automatic fallback handling**: If service usernames aren't configured in `.env`, the script uses meaningful defaults (`user1`, `user2`, `user3`) with clear warnings
+- **Interactive confirmation**: You'll be prompted before proceeding with fallback usernames
+- **Configuration guidance**: Clear instructions on how to configure proper service names
+- **Error prevention**: Validates configuration before making any changes to Vault
 
 ### Testing Vault Connection
 
 Test your Vault connection:
 ```bash
 python src/vault_client.py
+```
+
+Or use the setup script which includes connection verification:
+```bash
+python scripts/setup_vault_secrets.py
 ```
 
 ### Testing the Scripts
