@@ -20,6 +20,7 @@ Environment Variables Required:
 import os
 import sys
 import logging
+import json
 from pathlib import Path
 
 # Add the src directory to the path
@@ -37,14 +38,88 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
+def substitute_env_vars_in_config(config_data):
+    """
+    Substitute environment variables in configuration data for usernames
+    
+    This function looks for strings that match the pattern ${VAR_NAME} in usernames
+    and replaces them with the actual environment variable values.
+    
+    Args:
+        config_data (dict): The configuration dictionary
+        
+    Returns:
+        dict: Configuration data with environment variables substituted
+    """
+    import copy
+    import re
+    
+    config_copy = copy.deepcopy(config_data)
+    
+    # Get all environment variables that match MINIO_USER_* pattern with fallback defaults
+    # This ensures compatibility when .env file is missing or incomplete
+    username_mappings = {
+        "MINIO_USER_CONCOURSE": os.getenv("MINIO_USER_CONCOURSE", "user1"),
+        "MINIO_USER_JENKINS": os.getenv("MINIO_USER_JENKINS", "user2"),
+        "MINIO_USER_K8S": os.getenv("MINIO_USER_K8S", "user3")
+    }
+    
+    # Substitute usernames in the users section
+    if 'users' in config_copy:
+        for user_config in config_copy['users']:
+            username = user_config.get('username', '')
+            # Look for ${MINIO_USER_*} pattern and replace with env var value
+            for env_var, actual_username in username_mappings.items():
+                pattern = f'${{{env_var}}}'
+                if pattern in username:
+                    user_config['username'] = username.replace(pattern, actual_username)
+                    break
+                # Also handle direct env var name without ${} wrapper (alternative format)
+                elif username == env_var:
+                    user_config['username'] = actual_username
+                    break
+    
+    return config_copy
+
+
+def load_config():
+    """
+    Load and parse the MinIO server configuration file
+    
+    Returns:
+        dict: Configuration data with environment variables substituted
+        
+    Raises:
+        FileNotFoundError: If configuration file is not found
+        json.JSONDecodeError: If configuration file is not valid JSON
+    """
+    config_file = script_dir.parent / 'config' / 'minio_server_config.json'
+    
+    try:
+        with open(config_file, 'r') as f:
+            config_data = json.load(f)
+        
+        # Substitute environment variables for usernames
+        config_data = substitute_env_vars_in_config(config_data)
+        
+        return config_data
+        
+    except FileNotFoundError:
+        raise FileNotFoundError(f"Configuration file not found: {config_file}")
+    except json.JSONDecodeError as e:
+        raise Exception(f"Invalid JSON in configuration file: {e}")
+
+
 def setup_minio_user_secrets():
     """
     Set up MinIO user secrets in Vault
 
     This function will:
-    1. Connect to Vault using AppRole authentication
-    2. Store passwords for MinIO service users
-    3. Verify the secrets were stored correctly
+    1. Load user configuration from minio_server_config.json
+    2. Connect to Vault using AppRole authentication
+    3. Prompt for passwords for all configured MinIO users
+    4. Store passwords in Vault under the specified path
+    5. Verify the secrets were stored correctly
     """
 
     print("🔧 Setting up MinIO user secrets in HashiCorp Vault")
@@ -56,29 +131,62 @@ def setup_minio_user_secrets():
         vault_client = get_vault_client()
         print(f"✅ Successfully connected to Vault at {vault_client.vault_url}")
 
-        # Define the user passwords
-        # Read usernames from environment variables for security
-        concourse_user = os.getenv('MINIO_USER_CONCOURSE', 'user1')
-        jenkins_user = os.getenv('MINIO_USER_JENKINS', 'user2')
-        k8s_user = os.getenv('MINIO_USER_K8S', 'user3')
+        # Load configuration file
+        print("📖 Loading user configuration...")
+        try:
+            config_data = load_config()
+            users = config_data.get('users', [])
+            
+            if not users:
+                print("❌ Error: No users found in configuration file")
+                return False
+                
+            print(f"✅ Found {len(users)} users in configuration")
+            
+            # Check for users with fallback defaults and warn user
+            fallback_users = []
+            for user in users:
+                username = user.get('username', '')
+                if username in ['user1', 'user2', 'user3']:
+                    fallback_users.append(username)
+            
+            if fallback_users:
+                print(f"\n⚠️ WARNING: {len(fallback_users)} users are using fallback defaults:")
+                for username in fallback_users:
+                    print(f"  - {username}")
+                print("💡 Consider setting MINIO_USER_* environment variables in your .env file")
+                print("   for more meaningful usernames (see .env.example)")
+                
+                response = input("\nContinue with fallback usernames? (y/N): ").strip().lower()
+                if response not in ['y', 'yes']:
+                    print("Setup cancelled. Please configure your .env file and try again.")
+                    return False
+            
+        except Exception as e:
+            print(f"❌ Error loading configuration: {e}")
+            return False
 
-        # In production, these should be generated securely or entered interactively
-        user_passwords = {
-            concourse_user: input(f"Enter password for {concourse_user}: ").strip(),
-            jenkins_user: input(f"Enter password for {jenkins_user}: ").strip(),
-            k8s_user: input(f"Enter password for {k8s_user}: ").strip()
-        }
-
-        # Validate passwords
-        for username, password in user_passwords.items():
+        # Collect passwords for all configured users
+        user_passwords = {}
+        print("\n🔐 Please enter passwords for the configured users:")
+        
+        for user_config in users:
+            username = user_config.get('username')
+            if not username:
+                print(f"⚠️ Warning: Skipping user config with missing username: {user_config}")
+                continue
+                
+            password = input(f"Enter password for {username}: ").strip()
             if not password:
                 print(f"❌ Error: Empty password provided for {username}")
                 return False
+            user_passwords[username] = password
 
         # Store secrets in Vault
-        secret_path = "secret/data/minio/users"
-        vault_path = "minio/users"  # Path for KV v2 engine (without secret/data prefix)
-        print(f"\n📝 Storing secrets at path: {secret_path}")
+        # Use the vault_path from the first user config (all users share the same path)
+        vault_path_full = users[0].get('vault_path', 'secret/data/minio/users')
+        vault_path = vault_path_full.replace('secret/data/', '')  # Path for KV v2 engine
+        print(f"\n📝 Storing secrets at path: {vault_path_full}")
 
         try:
             # Verify client is properly initialized
@@ -101,7 +209,7 @@ def setup_minio_user_secrets():
         print("\n🔍 Verifying stored secrets...")
         try:
             for username in user_passwords.keys():
-                retrieved_password = vault_client.get_user_password(username, secret_path)
+                retrieved_password = vault_client.get_user_password(username, vault_path_full)
                 if retrieved_password == user_passwords[username]:
                     print(f"✅ {username}: Password verified")
                 else:
